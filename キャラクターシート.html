@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>キャラクター作成ツール</title>
+    <style>
+        /* スタイルはここに追加 */
+        .character-card {
+            margin: 10px;
+            padding: 10px;
+            border: none; /* 黒枠を削除 */
+        }
+        .character-image {
+            max-width: 150px;
+        }
+        /* 入力欄を広くするためのスタイル */
+        input[type="text"], input[type="number"], input[type="file"] {
+            width: 300px; /* 幅を300pxに設定 */
+            margin-bottom: 10px; /* 下にマージンを追加 */
+        }
+    </style>
+</head>
+<body>
+    <h1>キャラクター作成ツール</h1>
+    <div>
+        <label>キャラクター画像: </label>
+        <input type="file" id="imageInput" accept="image/*" onchange="previewImage(event)">
+        <img id="preview" src="" alt="キャラクター画像" style="display:none;">
+    </div>
+    <div>
+        <label>名前: </label>
+        <input type="text" id="player_name" oninput="updateStats()">
+    </div>
+    <div>
+        <label>種族: </label>
+        <input type="text" id="race" oninput="updateStats()">
+    </div>
+    <div>
+        <label>レベル: </label>
+        <input type="number" id="level" value="1" oninput="updateStats()">
+    </div>
+    <div>
+        <label>筋力: </label>
+        <input type="number" id="strength" oninput="updateStats()">
+    </div>
+    <div>
+        <label>敏捷: </label>
+        <input type="number" id="agility" oninput="updateStats()">
+    </div>
+    <div>
+        <label>耐久: </label>
+        <input type="number" id="endurance" oninput="updateStats()">
+    </div>
+    <div>
+        <label>知力: </label>
+        <input type="number" id="intelligence" oninput="updateStats()">
+    </div>
+    <div>
+        <label>精神力: </label>
+        <input type="number" id="spirit" oninput="updateStats()">
+    </div>
+    <div>
+        <label>アイテム: </label>
+        <input type="text" id="items">
+    </div>
+    <div>
+        <label>装備: </label>
+        <input type="text" id="equipment">
+    </div>
+    <div>
+        <label>スキル: </label>
+        <input type="text" id="skills">
+    </div>
+    <div>
+        <p>魔力: <span id="magicPower">0</span></p>
+        <p>体力: <span id="body">0</span></p>
+        <p>幸運: <span id="luck">0</span></p>
+    </div>
+    <button onclick="saveCharacter()">保存</button>
+    <button onclick="openCharacterStorage()">キャラクター保存庫を開く</button>
+
+    <script>
+        function previewImage(event) {
+            const preview = document.getElementById('preview');
+            preview.src = URL.createObjectURL(event.target.files[0]);
+            preview.style.display = 'block';
+        }
+
+        function calculateMagicPower(intelligence, spirit) {
+            return Math.ceil((intelligence + spirit) / 2);
+        }
+
+        function calculateBody(strength, endurance) {
+            return Math.ceil((strength + endurance) / 2);
+        }
+
+        function calculateLuck(agility, intelligence) {
+            return Math.min(30, 12 + Math.ceil((agility + intelligence) / 2));
+        }
+
+        function updateStats() {
+            const strength = parseInt(document.getElementById('strength').value) || 0;
+            const endurance = parseInt(document.getElementById('endurance').value) || 0;
+            const intelligence = parseInt(document.getElementById('intelligence').value) || 0;
+            const spirit = parseInt(document.getElementById('spirit').value) || 0;
+            const agility = parseInt(document.getElementById('agility').value) || 0;
+
+            document.getElementById('magicPower').textContent = calculateMagicPower(intelligence, spirit);
+            document.getElementById('body').textContent = calculateBody(strength, endurance);
+            document.getElementById('luck').textContent = calculateLuck(agility, intelligence);
+        }
+
+        function saveCharacter() {
+            const character = {
+                name: document.getElementById('player_name').value,
+                race: document.getElementById('race').value,
+                level: document.getElementById('level').value,
+                stats: {
+                    strength: parseInt(document.getElementById('strength').value),
+                    agility: parseInt(document.getElementById('agility').value),
+                    endurance: parseInt(document.getElementById('endurance').value),
+                    intelligence: parseInt(document.getElementById('intelligence').value),
+                    spirit: parseInt(document.getElementById('spirit').value),
+                    magicPower: calculateMagicPower(parseInt(document.getElementById('intelligence').value), parseInt(document.getElementById('spirit').value)), // 修正
+                    body: calculateBody(parseInt(document.getElementById('strength').value), parseInt(document.getElementById('endurance').value)), // 修正
+                    luck: calculateLuck(parseInt(document.getElementById('agility').value), parseInt(document.getElementById('intelligence').value)) // 修正
+                },
+                items: document.getElementById('items').value,
+                equipment: document.getElementById('equipment').value,
+                skills: document.getElementById('skills').value,
+                image: document.getElementById('preview').src // キャラクター画像を保存
+            };
+
+            const storedCharacters = JSON.parse(localStorage.getItem('characters')) || [];
+            storedCharacters.push(character);
+            localStorage.setItem('characters', JSON.stringify(storedCharacters));
+
+            alert('キャラクターが保存されました！');
+        }
+
+        function openCharacterStorage() {
+            const storedCharacters = JSON.parse(localStorage.getItem('characters')) || [];
+            const characterWindow = window.open('', '_blank');
+            characterWindow.document.write('<h1>キャラクター保存庫</h1>');
+            storedCharacters.forEach((character, index) => {
+                characterWindow.document.write(`<div class="character-card">`);
+                characterWindow.document.write(`<h2>${character.name} (${character.race})</h2>`);
+                characterWindow.document.write(`<img src="${character.image}" alt="キャラクター画像" class="character-image">`);
+                characterWindow.document.write(`<p>レベル: ${character.level}</p>`);
+                characterWindow.document.write(`<p>筋力: ${character.stats.strength}</p>`);
+                characterWindow.document.write(`<p>敏捷: ${character.stats.agility}</p>`);
+                characterWindow.document.write(`<p>耐久: ${character.stats.endurance}</p>`);
+                characterWindow.document.write(`<p>知力: ${character.stats.intelligence}</p>`);
+                characterWindow.document.write(`<p>精神力: ${character.stats.spirit}</p>`);
+                characterWindow.document.write(`<p>魔力: ${character.stats.magicPower}</p>`);
+                characterWindow.document.write(`<p>体力: ${character.stats.body}</p>`); // 追加
+                characterWindow.document.write(`<p>幸運: ${character.stats.luck}</p>`); // 追加
+                characterWindow.document.write(`<p>アイテム: ${character.items}</p>`);
+                characterWindow.document.write(`<p>装備: ${character.equipment}</p>`);
+                characterWindow.document.write(`<p>スキル: ${character.skills}</p>`);
+                characterWindow.document.write(`<button onclick="deleteCharacter(${index}, this)">削除</button>`);
+                characterWindow.document.write(`</div>`);
+            });
+        }
+
+        function deleteCharacter(index, button) {
+            const storedCharacters = JSON.parse(localStorage.getItem('characters')) || [];
+            storedCharacters.splice(index, 1);
+            localStorage.setItem('characters', JSON.stringify(storedCharacters));
+            alert('キャラクターが削除されました！');
+
+            // ボタンが押された位置の親要素を削除する
+            const characterCard = button.parentElement;
+            characterCard.remove();
+        }
+    </script>
+</body>
+</html>
